@@ -25,9 +25,16 @@ app.use("/url", restrictToLoggedInUserOnly, urlRoute);
 app.use("/user", userRoute);
 app.use("/", checkAuth, staticRouter);
 
-connectToMongoDB("mongodb://localhost:27017/short-url").then(() =>
-  console.log("MongoDB connected"),
-);
+// ✅ Safe for production
+if (!process.env.MONGO_URL) {
+  console.error("MONGO_URL is missing in environment variables!");
+  process.exit(1);
+}
+
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => console.log("MongoDB Atlas connected successfully!"))
+  .catch((err) => console.log("MongoDB connection error:", err));
 
 // this runs when we use the short url, this looks up for the shortid in db, then adds the timestamp after that res.redirect pulls out the og url instantly bounces the user's browser to that destination
 app.get("/:shortId", async (req, res) => {
@@ -53,7 +60,7 @@ app.post("/api/url", async (req, res) => {
   if (!body.url) return res.status(400).json({ error: "URL is required" });
 
   const shortId = shortid.generate(); // or whatever short ID generator you use
-  
+
   await URL.create({
     shortId: shortId,
     redirectURL: body.url,
@@ -66,4 +73,3 @@ app.post("/api/url", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server started at ${port}`);
 });
-
