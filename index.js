@@ -52,6 +52,11 @@ app.get("/:shortId", async (req, res) => {
       },
     },
   );
+  
+  if (!entry) {
+    return res.status(404).send("URL not found");
+  }
+
   res.redirect(entry.redirectURL);
 });
 
@@ -65,7 +70,6 @@ app.post("/api/url", async (req, res) => {
   await URL.create({
     shortId: shortId,
     redirectURL: body.url,
-    // createdBy: req.user._id // Optional: you can associate it with a "Discord Bot" user ID in DB
   });
 
   return res.json({ id: shortId });
